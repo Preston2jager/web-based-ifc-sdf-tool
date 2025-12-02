@@ -1,0 +1,173 @@
+:root{
+  --bg:#fff; --panel:#f3f4f6; --panel-hover:#eceff3;
+  --border:#d1d5db; --border-strong:#94a3b8;
+  --text:#111827; --muted:#475569; --accent:#2563eb;
+}
+
+/* 页面基础样式 */
+html,
+body,
+[data-testid="stAppViewContainer"]{
+  background:var(--bg);
+  color:var(--text);
+  font-size:16.5px;
+}
+
+/* 隐藏 Streamlit 默认顶部条 */
+header[data-testid="stHeader"],
+div[data-testid="stHeader"],
+div[data-testid="stDecoration"],
+div[data-testid="stToolbar"],
+div[data-testid="stStatusWidget"]{
+  display:none !important;
+}
+
+/* 顶部自定义全宽黑色标题栏（固定） */
+.app-topbar{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px;
+  z-index:9999;
+  background:#0f172a;
+  color:#fff;
+  border-bottom:1px solid #1f2937;
+}
+.app-topbar .title{
+  font-weight:800;
+  letter-spacing:.2px;
+}
+.app-topbar .muted{
+  color:#cbd5e1;
+  font-size:12px;
+}
+.app-topbar .right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.status-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 0 2px rgba(37,99,235,.15);
+}
+
+/* 留出顶栏高度的内边距（你现在内容从最上方开始，所以先设 0） */
+[data-testid="stAppViewContainer"]{
+  padding-top:0px;
+}
+
+/* headings + section spacing */
+[data-testid="stMarkdownContainer"] h1{
+  font-size:2rem;
+  margin:.2rem 0 1rem;
+}
+[data-testid="stMarkdownContainer"] h2{
+  font-size:1.5rem;
+  margin:.25rem 0 .5rem;
+}
+[data-testid="stMarkdownContainer"] h3{
+  font-size:1.15rem;
+  color:var(--muted);
+  margin:.25rem 0 .5rem;
+}
+
+/* 左侧按钮 */
+.stButton > button{
+  width:100%;
+  text-align:left;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--text);
+  transition:all .15s ease;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+  font-size:15.5px;
+  padding:.5rem .75rem;
+}
+.stButton > button:hover{
+  background:var(--panel-hover);
+  border-color:var(--border-strong);
+  transform:translateX(2px);
+}
+
+/* 状态卡片 */
+.status-card{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#e7efff;
+  border:1px solid var(--accent);
+  color:#0b1e5b;
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:600;
+  font-size:16px;
+}
+
+/* 输出块 */
+[data-testid="stCode"]{
+  background:var(--panel)!important;
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+[data-testid="stCode"] pre{
+  background:transparent!important;
+  color:var(--text)!important;
+  font-size:15.5px!important;
+  padding:8px 10px!important;
+}
+
+/* 下面这几个类名目前只要在主页面用到也行，
+   iframe 里的 viewer 自己有独立的 CSS，不会冲突 */
+.viewer-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel);
+  box-shadow:0 1px 4px rgba(15,23,42,.05);
+  padding:0;
+  overflow:hidden;
+  margin-top:4px;
+}
+.viewer-toolbar{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:8px;
+}
+.toolbar-row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.viewer-btn{
+  background:#ffffff;
+  border:1px solid var(--border);
+  color:#111827;
+  border-radius:10px;
+  padding:8px 14px;
+  cursor:pointer;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.viewer-btn:hover{
+  border-color:var(--border-strong);
+}
+#stat{
+  color:#475569;
+  font-size:14px;
+}
+
+/* 占位：如果主页面里也用到 #c，可以保证铺满宽度 */
+#c{
+  width:100%;
+  display:block;
+}

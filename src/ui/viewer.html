@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:transparent; }
+
+  .viewer-card{
+    border:1px solid #d1d5db;
+    border-radius:12px;
+    background:#f3f4f6;
+    box-shadow:0 1px 4px rgba(15,23,42,.05);
+    padding:0;
+    overflow:hidden;
+  }
+  .viewer-toolbar{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px;
+  }
+  .toolbar-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .viewer-btn{
+    background:#ffffff;
+    border:1px solid #d1d5db;
+    color:#111827;
+    border-radius:10px;
+    padding:8px 14px;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  .viewer-btn:hover{
+    border-color:#94a3b8;
+  }
+  #stat{
+    color:#475569;
+    font-size:14px;
+  }
+
+  /* 容器始终正方形，canvas 填满容器 */
+  #c{
+    width:100%;
+    aspect-ratio: 1 / 1;
+    position:relative;
+    display:block;
+  }
+  canvas{
+    display:block;
+    width:100% !important;
+    height:100% !important;
+  }
+</style>
+</head>
+<body>
+  <div class="viewer-card">
+    <div class="viewer-toolbar">
+      <div class="toolbar-row">
+        <label for="dirPicker" class="viewer-btn" style="display:inline-flex; align-items:center; gap:8px;">📂 Choose folder</label>
+        <input id="dirPicker" type="file" webkitdirectory multiple style="display:none" />
+        <button id="refitBtn" class="viewer-btn">Refit</button>
+        <button id="clearBtn" class="viewer-btn">Clear</button>
+      </div>
+      <div id="stat">No files loaded.</div>
+    </div>
+    <div id="c"></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+    import { OBJLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/OBJLoader.js";
+
+    const container = document.getElementById('c');
+    const stat = document.getElementById('stat');
+    const dirPicker = document.getElementById('dirPicker');
+    const refitBtn = document.getElementById('refitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf3f4f6);
+
+    const cam = new THREE.PerspectiveCamera(60, 1, 0.01, 1e12);
+    cam.up.set(0,0,1);
+
+    const controls = new OrbitControls(cam, renderer.domElement);
+    controls.enableDamping = true;
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.ROTATE,
+      RIGHT: THREE.MOUSE.ROTATE
+    };
+    controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.ROTATE
+    };
+    renderer.domElement.addEventListener('wheel', e => {
+      e.preventDefault();
+    }, { passive:false });
+
+    const grid = new THREE.GridHelper(50, 50, 0xcbd5e1, 0xe5e7eb);
+    grid.rotation.x = Math.PI / 2;
+    scene.add(grid);
+    scene.add(new THREE.AxesHelper(2.0));
+
+    const root = new THREE.Group();
+    scene.add(root);
+    const material = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide, wireframe:false });
+    const loader = new OBJLoader();
+
+    function fitAll(fill=0.8) {
+      if (root.children.length === 0) {
+        cam.position.set(6,4,5);
+        cam.near = 0.01;
+        cam.far = 10000;
+        cam.updateProjectionMatrix();
+        controls.target.set(0,0,0);
+        controls.minDistance = 8;
+        controls.maxDistance = 8;
+        controls.update();
+        return;
+      }
+      const box = new THREE.Box3().setFromObject(root);
+      const sph = new THREE.Sphere();
+      box.getBoundingSphere(sph);
+      const center = sph.center.clone();
+      const radius = Math.max(sph.radius, 1e-6);
+      const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov)/2);
+      const aspect = cam.aspect || 1;
+      const dV = radius / (fill * tanV);
+      const dH = radius / (fill * tanV * aspect);
+      const dist = Math.max(dV, dH);
+      const dir = new THREE.Vector3(0.75,0.5,1).normalize();
+      cam.position.copy(center).addScaledVector(dir, dist);
+      cam.near = Math.max(dist/1000, 0.01);
+      cam.far = Math.max(dist*1000, cam.near+1);
+      cam.updateProjectionMatrix();
+      controls.target.copy(center);
+      controls.minDistance = dist;
+      controls.maxDistance = dist;
+      controls.update();
+    }
+
+    // 让 canvas 永远和容器同宽同高（正方形）
+    function resizeToContainer(){
+      const rect = container.getBoundingClientRect();
+      const w = Math.max(200, Math.floor(rect.width));
+      const h = Math.max(200, Math.floor(rect.height));
+      renderer.setSize(w, h, false);
+      cam.aspect = w / h;
+      cam.updateProjectionMatrix();
+    }
+    const ro = new ResizeObserver(() => {
+      resizeToContainer();
+      fitAll(0.8);
+    });
+    ro.observe(container);
+    window.addEventListener('load', () => {
+      resizeToContainer();
+      fitAll(0.8);
+    });
+
+    function animate(){
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, cam);
+    }
+    animate();
+
+    function clearScene(){
+      for (let i=root.children.length-1; i>=0; i--){
+        const child=root.children[i];
+        root.remove(child);
+        child.traverse?.(o=>{
+          if(o.isMesh){
+            o.geometry?.dispose?.();
+            if(o.material?.dispose) o.material.dispose();
+          }
+        });
+      }
+    }
+
+    async function loadFromFileList(fileList){
+      const objs = Array.from(fileList)
+        .filter(f=>f.name.toLowerCase().endsWith(".obj"))
+        .sort((a,b)=>a.name.localeCompare(b.name));
+
+      if (objs.length===0){
+        stat.textContent="No .obj files in the selected folder.";
+        return;
+      }
+      stat.textContent=`Reading ${objs.length} files...`;
+      clearScene();
+      let loaded=0, failed=0;
+      for (const f of objs){
+        try{
+          const txt = await f.text();
+          const obj = loader.parse(txt);
+          obj.traverse(n=>{
+            if(n.isMesh) n.material = material;
+          });
+          root.add(obj);
+          loaded++;
+        }catch(e){
+          console.warn("Failed:", f.name, e);
+          failed++;
+        }
+        if ((loaded+failed)%10===0){
+          stat.textContent=`Loading... ${loaded} OK, ${failed} failed.`;
+          await new Promise(r=>setTimeout(r,0));
+        }
+      }
+      fitAll(0.8);
+      stat.textContent = `Loaded ${loaded} file(s)` + (failed ? `, ${failed} failed.` : ".");
+    }
+
+    document.querySelector('label[for="dirPicker"]').addEventListener('click', ()=>{
+      dirPicker.value="";
+    });
+    dirPicker.addEventListener('change', e => {
+      const files=e.target.files;
+      if(files && files.length) loadFromFileList(files);
+    });
+    refitBtn.addEventListener('click', ()=> fitAll(0.8));
+    clearBtn.addEventListener('click', ()=>{
+      clearScene();
+      fitAll(0.8);
+      stat.textContent="Cleared. No files loaded.";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+
+# ===== Path =====
+Pathes: 
+  # ===== Training pathes =====
+  Configs_folder_path: "Data/Training/Configs"
+  Raw_IFC_folder_path: "Data/Training/Raw_IFC"
+  Expanded_IFC_folder_path: "Data/Training/Expanded_IFC"
+  Objects_folder_path: "Data/Training/Objects"
+  Converted_SDF_folder_path: "Data/Training/Converted_SDF"
+  Trained_SDF_folder_path: "Data/Training/Trained"
+
+# ===== Extracting =====
+Extract:
+  # ===== IFC =====
+  Data_expand: False
+  Copies: 1
+  Suffix: "_scaled"
+  Ifc_classes:  
+    - IfcWindow
+    - IfcDoor
+    - IfcSlab
+    - IfcWall
+    - IfcColumn
+    - IfcBeam
+    - IfcSpace
+    - IfcRoof
+  # ===== SDF =====
+  Scale: 0.1
+  Minimal_per_surface: 100 #after scaling
+  Dense_of_samples_on_surface: 5000   # per m2 after scaling
+  R1_radius: 0.1 #before scaling
+  R1_num: 10
+  R2_radius: 0.5 #before scaling
+  R2_num: 8
+  R3_radius: 2 #before scaling
+  R3_num: 6
+  R4_radius: 10 #before scaling
+  R4_num: 4
+  R5_radius: 20 #before scaling
+  R5_num: 2
+
+# ===== Training =====
+Train:
+  Seed: 12   # Seed for reproducibility
+  Epochs: 500
+  Lr_model: 0.0007   # Initial learning rate (model)
+  Lr_latent: 0.0007  # Initial learning rate (latent vector)
+  Batch_size: 307200 # 40960 for quick, x10 for 16g VRAM
+  Sigma_regulariser: 0.001  # Sigma value as regulariser in the loss function
+  Loss_multiplier: 1   # Loss multiplier
+  Loss_function: 4 # Loss function type
+  # ===== architecture =====
+  Num_layers: 8   # Num network layers
+  Inner_dim: 512 # Inner dimensions of the network
+  Latent_size: 128  # Size of the latent vector
+  Skip_connections: True
+
+  # ===== lr_scheduling =====
+  Lr_scheduler: True   # Learning rate scheduling
+  Lr_multiplier: 0.9   # Multiplier for the learning rate scheduling
+  Patience: 20   # Patience inthe learning rate scheduling
+
+# ==== Reconstructing ====
+Reconstruct:
+  Init_res: 128
+  Max_depth: 9
+  Global_box:
+    - [-2, 2]
+    - [-2, 2]
+    - [-1, 3]
